@@ -1,8 +1,10 @@
-package xibss.parsers
+package xibss.parser
 
 import xibss._
 
 import org.scalatest.{FlatSpec, Matchers}
+
+import scala.collection.immutable.Stack
 
 class XIBParsingSpec extends FlatSpec with  Matchers {
 
@@ -36,6 +38,49 @@ class XIBParsingSpec extends FlatSpec with  Matchers {
         </constraints>
       </view>
     XIBParser.parse(view) should be (Some(ViewNode("UIView", "1", constraints = List(Constraint(Some("1i"), Some("1a"), Some("2i"), Some("2a"), 4.1, 5.2)))))
+  }
+
+  it should "performs a breadth first traversal" in {
+    val view =
+      <view id="1">
+        <subviews>
+          <view id="2"></view>
+        </subviews>
+      </view>
+    val node = XIBParser.parse(view).get
+    var matchSequence = List("1", "2")
+    node.walk(true) { (curr, parent, siblings) =>
+      curr.id should be (matchSequence.head)
+      matchSequence = matchSequence.drop(1)
+    }
+  }
+
+  it should "performs a depth first traversal" in {
+    val view =
+      <view id="1">
+        <subviews>
+          <view id="2"></view>
+        </subviews>
+      </view>
+
+    val node = XIBParser.parse(view).get
+    var matchSequence = List("2", "1")
+    node.walk(false) { (curr, parent, siblings) =>
+      curr.id should be (matchSequence.head)
+      matchSequence = matchSequence.drop(1)
+    }
+  }
+
+  it should "parse a file" in {
+    val view =
+      <document>
+        <objects>
+          <view id="1"></view>
+          <view id="2"></view>
+        </objects>
+      </document>
+    val expected = List(ViewNode("UIView", "1"), ViewNode("UIView", "2"))
+    XIBParser.parseFromFile(view) should be (expected)
   }
 
 }

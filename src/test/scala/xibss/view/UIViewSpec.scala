@@ -1,4 +1,4 @@
-package xibss.views
+package xibss.view
 
 import org.scalatest.{Matchers, FlatSpec}
 

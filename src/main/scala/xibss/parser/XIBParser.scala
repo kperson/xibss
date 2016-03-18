@@ -1,6 +1,7 @@
-package xibss.parsers
+package xibss.parser
 
-import xibss.{Constraint, ViewNode}
+import xibss.constraint.Constraint
+import xibss.{ViewNode}
 
 import scala.xml.{NodeSeq, Node}
 
@@ -14,6 +15,19 @@ object XIBParser {
   )
 
   /**
+   * Parses a nib and extracts the views
+   *
+   * @param xml the rootXML of the nib
+   * @return a list of views
+   */
+  def parseFromFile(xml: Node): List[ViewNode] = {
+    builtInTypes.keys.flatMap { k =>
+      val views = xml \ "objects" \ k
+      views.flatMap { v => parse(v) }
+    }.toList
+  }
+
+  /**
    * Parse views from a xib into a tree
    *
    * @param xml the root XML, this XML must be a UIView or subclass of UIView
@@ -25,8 +39,12 @@ object XIBParser {
     val label = xml.label
     val attributesExceptId = xml.attributes.asAttrMap.filterKeys { k => k != "id" }
 
+    def nodeName(str: String) = {
+      "n_" + str.replaceAll("-", "_")
+    }
+
     //id
-    val id = (xml \ "@id").text
+    val id = nodeName((xml \ "@id").text)
     builtInTypes.get(label).map { c =>
 
       //subviews
@@ -34,20 +52,22 @@ object XIBParser {
         x.child.flatMap(parse(_, Some(id)))
       }.getOrElse(List.empty).toList
 
+      val constraintExcludes = ((xml \ "variation" \ "mask").filter(_.attributes.asAttrMap("key") == "constraints")  \ "exclude" \ "@reference").map(_.text)
       //constraints
       val constraints = (xml \ "constraints").headOption.map { x =>
-        (x \ "constraint").map { a =>
-          val firstItem = (a \ "@firstItem").textOptional
+        (x \ "constraint").filter { x => !constraintExcludes.contains((x \ "@id").text) }.map { a =>
+          val firstItem = (a \ "@firstItem").textOptional.map { nodeName(_) }
           val firstAttribute = (a \ "@firstAttribute").textOptional
-          val secondItem = (a \ "@secondItem").textOptional
+          val secondItem = (a \ "@secondItem").textOptional.map { nodeName(_) }
           val secondAttribute = (a \ "@secondAttribute").textOptional
           val constant = (a \ "@constant").textOptional.map { _.toDouble }.getOrElse(0.0)
           val multiplier = (a \ "@multiplier").textOptional.map { _.toDouble }.getOrElse(1.0)
-          Constraint(firstItem, firstAttribute, secondItem, secondAttribute, constant, multiplier)
+          val relation = (a \ "@relation").textOptional.getOrElse("equal")
+          Constraint(firstItem, firstAttribute, secondItem, secondAttribute, constant, multiplier, id, relation)
         }
       }.getOrElse(List.empty).toList
 
-      ViewNode(c, id, parentId, attributes = attributesExceptId, subviews = subviews, constraints = constraints)
+      ViewNode(c, id, xml, parentId, attributes = attributesExceptId, subviews = subviews, constraints = constraints)
     }
   }
 

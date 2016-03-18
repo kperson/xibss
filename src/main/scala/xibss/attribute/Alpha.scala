@@ -1,4 +1,4 @@
-package xibss.attributes
+package xibss.attribute
 
 import xibss._
 
