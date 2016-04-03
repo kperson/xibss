@@ -4,7 +4,7 @@ import scala.collection.mutable.ListBuffer
 
 
 case class GSSNode(className: Option[String] = None, children: ListBuffer[GSSNode] = ListBuffer.empty, attributes: ListBuffer[String] = ListBuffer.empty)
-case class HTMLNode(className: Option[String] = None, var tag: Option[String] = None, var isContainer: Boolean = true, var inner: Option[String] = None, children: ListBuffer[HTMLNode] = ListBuffer.empty)
+case class HTMLNode(className: Option[String] = None, var tag: Option[String] = None, var isContainer: Boolean = true, var inner: Option[String] = None, children: ListBuffer[HTMLNode] = ListBuffer.empty, var attributes: Map[String, String] = Map.empty)
 
 object GSSNode {
 
@@ -38,8 +38,10 @@ object HTMLNode {
       val className = self.className.getOrElse(if(rootClassName.startsWith(".")) rootClassName else "." + rootClassName)
       val htmlIndent = "  " * depth
       val tag = self.tag.getOrElse("div")
+      val attributes = self.attributes.map { case (k, v) => s"${k}='${v}'" }.mkString(" ")
+      val attributeStr = if(self.attributes.isEmpty) "" else " " + attributes
 
-      strBuilder.append(s"${htmlIndent}<${tag} class='${className.drop(1)}'")
+      strBuilder.append(s"${htmlIndent}<${tag} class='${className.drop(1)}'${attributeStr}")
       id.foreach { a =>
         strBuilder.append(s" id='${a}'")
       }

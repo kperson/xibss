@@ -8,9 +8,14 @@ trait ViewLike {
 
   import ViewLike._
 
+  def tag: String
+  def tagIsContainer: Boolean
+  def innerHTML: Option[String] = None
+
   def node: ViewNode
   def xml = node.xml
   def id: String = node.id
+  def extraAttributes: Map[String, Option[String]] = Map.empty
 
   val subviews = node.subviews.flatMap { _.toView }
   val constraints = node.constraints
@@ -29,6 +34,8 @@ trait ViewLike {
       s.walk(Some(this), depth + 1)(handler)
     }
   }
+
+  def extraGSS() : List[String] = List.empty
 
 }
 
@@ -71,6 +78,7 @@ object ViewLike {
         case "UIView" => Some(UIView(self))
         case "UILabel" => Some(UILabel(self))
         case "UIButton" => Some(UIButton(self))
+        case "UIImageView" => Some(UIImageView(self))
         case _ => None
       }
     }

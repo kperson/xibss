@@ -69,6 +69,7 @@ object Main extends App {
         }
       }
 
+      gss.attributes.appendAll(curr.extraGSS())
       gss.attributes.append("display: block")
       gss.attributes.appendAll(constraintAttributes.sortWith { (a, b) => a < b })
 
@@ -79,22 +80,26 @@ object Main extends App {
       TextColor.unapply(curr).foreach { color =>
         gss.attributes.append(s"color: ${color.toCSS}")
       }
+
+      TextAlign.unapply(curr).foreach { align =>
+        gss.attributes.append(s"text-align: ${align}")
+      }
+
+      ObjectFit.unapply(curr).foreach { fit =>
+        gss.attributes.append(s"object-fit: ${fit}")
+      }
     }
 
     v.walkHTML(rootNode = rootHTML) { (curr, parent, siblings, html) =>
-      curr match {
-        case UIView(node) =>
-          html.tag = Some("div")
-          html.isContainer = true
-        case lbl @ UILabel(node) =>
-          html.tag = Some("label")
-          html.isContainer = true
-          html.inner = lbl.text
-        case btn @ UIButton(node) =>
-          html.tag = Some("button")
-          html.isContainer = true
-          html.inner = btn.text
+      html.tag = Some(curr.tag)
+      html.isContainer = curr.tagIsContainer
+      html.inner = curr.innerHTML
+      val attributes = curr.extraAttributes.flatMap { case (k, v) =>
+        v.map(q => (k, q))
       }
+      html.attributes = attributes
+
+
     }
 
     if(command == "html") {

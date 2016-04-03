@@ -6,7 +6,9 @@ import scala.xml.Node
 
 case class UILabel(node: ViewNode) extends ViewLike {
 
-  def text: Option[String] = List(UILabel.read(node.xml), node.attributes.get("text")).flatMap { a => a }.headOption
+  def tag = "label"
+  def tagIsContainer = true
+  override def innerHTML: Option[String] = List(UILabel.read(node.xml), node.attributes.get("text")).flatMap { a => a }.headOption
 
 }
 

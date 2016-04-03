@@ -11,7 +11,8 @@ object XIBParser {
   val builtInTypes = Map (
     "label" -> "UILabel",
     "view" -> "UIView",
-    "button" -> "UIButton"
+    "button" -> "UIButton",
+    "imageView" -> "UIImageView"
   )
 
   /**
